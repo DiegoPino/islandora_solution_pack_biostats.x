@@ -1,0 +1,12 @@
+name = "Islandora Biostats"
+description = "An Islandora Repository module to handle Biodiversity statistic using Objects and GBIF data"
+dependencies[] = islandora
+dependencies[] = islandora_basic_collection
+dependencies[] = islandora_solr
+dependencies[] = islandora_red_biodiversidad
+dependencies[] = islandora_ontologies
+package = Islandora
+core = 7.x
+version = 7.x-dev
+configure = admin/islandora/solution_pack_config/biostats
+stylesheets[all][] = css/islandora_biostats.theme.css

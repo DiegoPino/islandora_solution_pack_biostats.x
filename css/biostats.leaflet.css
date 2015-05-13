@@ -1,0 +1,92 @@
+#biostats-progress {
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    left: 400px;
+    top: 300px;
+    width: 200px;
+    height: 20px;
+    margin-top: -20px;
+    margin-left: -100px;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+#biostats-progress-bar {
+    width: 0;
+    height: 100%;
+    background-color: #76A6FC;
+    border-radius: 4px;
+}
+
+.biostatsmarker-cluster-small {
+	background-color: rgba(151,225,228,0.8);
+	}
+.biostatsmarker-cluster-small div {
+	background-color: rgba(134,204,189,0.6);
+	}
+
+.biostatsmarker-cluster-medium {
+	background-color: rgba(133,196,240,0.8);
+	}
+.biostatsmarker-cluster-medium div {
+	background-color: rgba(133,196,240,0.6);
+	}
+
+.biostatsmarker-cluster-large {
+	background-color: rgba(117,134,235,0.8);
+	}
+.biostatsmarker-cluster-large div {
+	background-color: rgba(109,125,222,0.6);
+	}
+
+	/* IE 6-8 fallback colors */
+.leaflet-oldie .biostatsmarker-cluster-small {
+	background-color: rgb(150,227,212);
+	}
+.leaflet-oldie .biostatsmarker-cluster-small div {
+	background-color: rgb(134,204,189);
+	}
+
+.leaflet-oldie .biostatsmarker-cluster-medium {
+	background-color: rgb(133,196,240);
+	}
+.leaflet-oldie .biostatsmarker-cluster-medium div {
+	background-color: rgb(133,196,240);
+	}
+
+.leaflet-oldie .biostatsmarker-cluster-large {
+	background-color: rgb(117,134,235);
+	}
+.leaflet-oldie .biostatsmarker-cluster-large div {
+	background-color: rgb(109,125,222);
+}
+
+.biostatsmarker-cluster {
+	background-clip: padding-box;
+	border-radius: 9px;
+	
+	}
+.biostatsmarker-cluster div {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+	margin-top: 5px;
+
+	text-align: center;
+	border-radius: 7px;
+	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	
+	}
+.biostatsmarker-cluster span {
+	line-height: 30px;
+	}
+
+.biostats-widget {
+	with:200px;
+	float: left;
+	clear: none;
+}
+	

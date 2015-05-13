@@ -1,0 +1,110 @@
+(function ($) {
+           
+		   
+		   var cats = {};
+           var categories_meta = [];
+           var overlayMaps = [];
+           var markers_category = [];
+           var leaflet_meta = [];
+		   var thismap=null;
+		   var markers = new L.MarkerClusterGroup();
+		   		   
+		   $(document).bind('leaflet.feature', function(e,lFeature, feature)
+   			{
+				
+			 console.log(feature);	
+			console.log(lFeature);
+				
+				if (!markers_category[feature.clusterGroup])
+					{
+					cats[feature.clusterGroup]=feature.clusterGroup;
+					markers_category[feature.clusterGroup]=[];
+					}	
+				
+					
+			    markers_category[feature.clusterGroup].push(lFeature);
+				markers.addLayer(lFeature);
+				  
+   			});
+			
+ 		   $(document).bind('leaflet.MarkerClusterGroup', function(e,clustergroup,clusterLayers)
+		   	{
+		   		 console.log(clustergroup);
+				 console.log(clusterLayers);	
+		   	});
+		   
+			
+			
+			/*for (var index in categories)
+				{
+				console.log(index);
+				categories[index]=new L.layerGroup().addTo(thismap);
+				console.log(categories);
+				}	*/
+				
+	   $(document).bind('leaflet.map', function(e, map, lMap)
+	    		{
+	    		//console.log(map);
+				//console.log(lMap);
+			 console.log(markers);
+				for (var index in cats)
+								{
+								
+								cats[index]=new L.layerGroup().addTo(lMap);
+								overlayMaps[index] = cats[index];
+								}	   
+				 // console.log(cats);
+				  var control = L.control.layers(null, overlayMaps, {
+				             collapsed: false,
+				             position: 'topleft'
+				         }
+				     );
+				   control.addTo(lMap);
+				   //console.log(control);
+				    lMap.addLayer(markers);
+				   for (var row in control._layers) {
+				           leaflet_meta[L.Util.stamp(control._layers[row].layer)] = control._layers[row].name;
+				       }
+				   
+					   lMap.on('overlayadd', function (a) {
+						       
+							   var category_index = leaflet_meta[L.Util.stamp(a.layer)];
+							   console.log(category_index);
+							   console.log(markers_category[category_index]);
+					           markers.addLayers(markers_category[category_index]);
+					       });
+					  lMap.on('overlayremove', function (a) {
+						  console.log(a);
+						
+					           var category_index = leaflet_meta[L.Util.stamp(a.layer)];
+					           markers.removeLayers(markers_category[category_index]);
+					       });	   
+					   
+					   
+				  /*  $.each(lMap._layers, function (ml) {
+
+				        if (lMap._layers[ml].feature) {
+
+				            allMarkersObjArray.push(this)
+				           
+				        }
+				    })
+
+				    console.log(allMarkersObjArray);*/
+				
+	   		 
+			 
+			 
+			 });	
+	
+      
+  
+
+  // Inject into leaflet initialize.
+  // @todo: there should be a nicer way to do that?
+  
+  
+
+})(jQuery);
+
+

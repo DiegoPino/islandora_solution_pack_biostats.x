@@ -1,0 +1,247 @@
+<?php
+
+/**
+ * @file
+ * Handles Biodiversity data analisys and comparision to GBIF's one
+ * It relies on islandora_ontologies_solution_pack and islandora_red_biodiversidad
+ */
+// Permissions.
+define('ISLANDORA_BIOSTATS_ADMINISTER_PERMISSION', 'administer islandora BIOSTATS');
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_biostats_permission() {
+  return array(
+    ISLANDORA_BIOSTATS_ADMINISTER_PERMISSION => array(
+      'title' => t('Administer Islandora Red Biodiversidad'),
+      'description' => t('Access Islandora Red Biodiversidad administration page.'),
+    ),
+  );
+}
+
+
+
+
+
+/**
+ * Implements hook_menu().
+ *
+ * See https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_menu/7
+ */
+function islandora_biostats_menu() {
+  $items['admin/islandora/solution_pack_config/biostats'] = array(
+    'title' => 'Islandora Biostats',
+    'description' => 'Configure the Biostats analisis package.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_biostats_admin'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/admin.form.inc',
+    'access arguments' => array(ISLANDORA_BIOSTATS_ADMINISTER_PERMISSION),
+  );
+ 
+  
+  
+  $items['islandora/biostats/reportforcountry/%'] = array(
+    'title' => 'Biostats for Country',
+    'page callback' => 'islandora_biostats_percountry_display',
+    'page arguments' => array(3),
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('search islandora solr'),
+  );
+  $items['islandora/object/%islandora_object/biostats'] = array(
+    'weight' => 5,
+    'title' => 'Statistics',
+    'page callback' => 'islandora_biostats_perobject_display',
+    'page arguments' => array(2),
+    'type' => MENU_LOCAL_TASK,
+    'access callback' => 'islandora_red_biodiversidad_access',
+    'access arguments' => array(2),
+  );
+  
+  //Ajax callbacks for incremental gbif ocurrences load
+  $items['islandora/biostats/ajax/getgbifocurrences/CL/%/%'] = array(
+    'weight' => 5,
+    'page callback' => 'islandora_biostats_ajax_getgbifocurrences',
+    'file' => 'includes/callbacks.inc',
+    'page arguments' => array(4,5,6),
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('search islandora solr'),
+
+  );
+  $items['islandora/biostats/ajax/getgbifocurrences_stream/CL/%/0'] = array(
+    'weight' => 5,
+    'page callback' => 'islandora_biostats_ajax_getgbifocurrences_stream',
+    'file' => 'includes/callbacks.inc',
+    'page arguments' => array(4,5,6),
+    'type' => MENU_CALLBACK,
+    'access arguments' => array(TRUE),
+
+  );
+  $items['islandora/biostats/autocomplete/%'] = array(
+    'title' => 'Form Callbacks',
+    'description' => 'Autocomplete a Field from DwC',
+    'page callback' => 'islandora_biostats_autocomplete',
+    'page arguments' => array(3),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/callbacks.inc',
+    'access arguments' => array('search islandora solr'),
+  );
+
+  return $items;
+}
+
+
+function islandora_biostats_percountry_display($country = 'CL') {
+  $output = theme('islandora_biostats_percountry',
+    array('country' => $country));
+  return $output;
+}
+function islandora_biostats_perobject_display($islandora_object) {
+  $output = theme('islandora_biostats_perobject',
+    array('islandora_object' => $islandora_object));
+  return $output;
+}
+
+/**
+ * Implements hook_theme().
+ *
+ * We supply a pattern so we can overide templates at the theme level if needed.
+ * we can append a pid to a template and the new template file will be called
+ * (the pids colon should be replaced with a dash).
+*/
+function islandora_biostats_theme($existing, $type, $theme, $path) {
+  return array(
+    'islandora_biostats_percountry' => array(
+    'file' => 'theme/theme.inc',
+    'template' => 'theme/islandora-biostats-percountry',
+    'pattern' => 'islandora-biostats-percountry__',
+    'variables' => array('country' => NULL),
+    ),
+    // Themes the output of the  tab.
+    'islandora_biostats_perobject' => array(
+      'file' => 'theme/theme.inc',
+      'template' => 'theme/islandora-biostats-perobject',
+      'variables' => array('islandora_object' => NULL),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_library().
+ */
+function islandora_biostats_library() {
+  
+  $path=drupal_get_path('module', 'islandora_biostats');
+  
+  $libraries['islandora_biostats_viz'] = array(
+    'title' => 'Google Chart API',
+    'version' => 1,
+    'website' => 'https://developers.google.com/chart/?csw=1',
+    'css' => array(
+        "$path/css/biostats.leaflet.css" => array(
+        'type' => 'file',
+        'media' => 'screen',
+              ),
+        ),      
+    'js' => array(
+      array(
+        'type' => 'external',
+        'data' => 'https://www.google.com/jsapi?autoload={"modules":[{"name":"visualization","version":"1","packages":["corechart","table"]}]}',
+        'group' => JS_LIBRARY,
+        'weight' => 2,
+      ),
+      array(
+        'type' => 'file',
+        'data' => "$path/js/biostats.drupal.js",
+        'group' => JS_LIBRARY,
+        'preprocess' => FALSE,
+        'weight' => 3,
+      ),
+      array(
+        'type' => 'file',
+        'data' => "$path/js/oboe-browser.min.js",
+        'group' => JS_LIBRARY,
+        'preprocess' => FALSE,
+        'weight' => -7,
+      ),
+      array(
+        'type' => 'file',
+        'data' => "$path/js/leaflet.biostats.js",
+        'group' => JS_LIBRARY,
+        'preprocess' => FALSE,
+        'weight' => -6,
+      ),
+    ),
+  ); 
+
+
+  return $libraries;
+}
+/*
+ * Attach biostats required html/js/css files and return renderable array for choosen visualization type
+ *
+ * @param array $chartsettings
+ *   Chart definition as returned my islandora_biostats_chart_get_info();
+ * @param string $chartid
+ *   HTML unique ID for this chart
+ * @param array $data
+ *   Associative array of data
+ * @param string $height
+ *   The height of the chart.
+ *
+ * @return array
+ *   A renderable array.
+ */
+function islandora_biostats_build_chart($chartsettings, $charttype='Table',$chartid='biotstats_chart' , $data = array(), $height = '400px') {
+  $chart_id = drupal_html_id($chartid);
+  $build = array(
+    '#theme' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => '',
+    '#attributes' => array(
+      'id' => $chart_id,
+      'style' => 'height: ' . $height,
+      'class' => 'biotstats-widget',
+    ),
+  );
+
+  $settings = array(
+    'chartId' => $chart_id,
+    'chartoptions' => (object) $chartsettings,
+    'chartdata' => $data,
+    'charttype' => $charttype,
+  );
+  
+  //drupal_alter('islandora_biostats_chart_prebuild', $settings);
+
+  $build['#attached']['js'][] = array(
+    'data' => array(
+      'biostats_viz' => array($settings),
+    ),
+    'type' => 'setting',
+  );
+
+  // Load the biostats, which includes integration files.
+  drupal_add_library('islandora_biostats','islandora_biostats_viz');
+  
+  
+  return $build;
+}
+
+
+
+
+
+function islandora_biostats_leaflet_map_prebuild_alter(&$vars = NULL) {
+  if (!isset($vars['map']['settings']['maxClusterRadius']) || $vars['map']['settings']['maxClusterRadius'] > 0) {
+    drupal_add_library('islandora_red_biodiversidad', 'leaflet_sidebar');
+    drupal_add_library('islandora_red_biodiversidad', 'leaflet_fullscreen');
+    drupal_add_library('islandora_red_biodiversidad', 'leaflet_markercluster_layercontrol');
+    $options = array('type' => 'file', 'weight' => 2);
+    drupal_add_js(drupal_get_path('module', 'islandora_red_biodiversidad') . '/js/leaflet.markercluster.layercontrol.js', $options);
+    // Increase weight so we're included after 'leaflet_markercluster_drupal.js'
+   
+  }
+}
